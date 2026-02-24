@@ -48,10 +48,24 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    const initAuth = async () => {
+      // Safety timeout to avoid perpetual loading screen
+      const timeout = setTimeout(() => {
+        if (loading) setLoading(false)
+      }, 5000)
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+      } catch (e) {
+        console.error('Auth initialization failed:', e)
+      } finally {
+        clearTimeout(timeout)
+        setLoading(false)
+      }
+    }
+
+    initAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
