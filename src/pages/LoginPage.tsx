@@ -1,34 +1,61 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
 
-type Step = 'email' | 'otp'
+type Mode = 'login' | 'signup' | 'forgot'
 
 export default function LoginPage() {
-    const [step, setStep] = useState<Step>('email')
+    const [mode, setMode] = useState<Mode>('login')
     const [email, setEmail] = useState('')
-    const [otp, setOtp] = useState('')
+    const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
+    const [info, setInfo] = useState('')
     const [loading, setLoading] = useState(false)
 
-    async function handleSendOtp(e: React.FormEvent) {
+    async function handleLogin(e: React.FormEvent) {
         e.preventDefault()
-        setError('')
+        setError(''); setInfo('')
         setLoading(true)
-        const { error } = await supabase.auth.signInWithOtp({ email })
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
         setLoading(false)
-        if (error) { setError(error.message); return }
-        setStep('otp')
+        if (error) setError(error.message === 'Invalid login credentials'
+            ? 'Wrong email or password. Try again.'
+            : error.message)
     }
 
-    async function handleVerifyOtp(e: React.FormEvent) {
+    async function handleSignup(e: React.FormEvent) {
         e.preventDefault()
-        setError('')
+        setError(''); setInfo('')
+        if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
         setLoading(true)
-        const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' })
+        const { error } = await supabase.auth.signUp({ email, password })
         setLoading(false)
-        if (error) setError(error.message)
+        if (error) { setError(error.message); return }
+        setInfo('Account created! Check your email to confirm, then come back and log in.')
+        setMode('login')
     }
+
+    async function handleForgot(e: React.FormEvent) {
+        e.preventDefault()
+        setError(''); setInfo('')
+        setLoading(true)
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password`,
+        })
+        setLoading(false)
+        if (error) { setError(error.message); return }
+        setInfo('Password reset link sent! Check your email.')
+    }
+
+    function switchMode(m: Mode) {
+        setMode(m)
+        setError('')
+        setInfo('')
+        setPassword('')
+    }
+
+    const onSubmit = mode === 'login' ? handleLogin : mode === 'signup' ? handleSignup : handleForgot
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
@@ -42,67 +69,91 @@ export default function LoginPage() {
                     <p className="text-sm text-gray-500 mt-1">Inventory expiry tracker</p>
                 </div>
 
-                {step === 'email' ? (
-                    <form onSubmit={handleSendOtp} className="space-y-4">
+                {/* Mode heading */}
+                <p className="text-sm font-medium text-gray-700 mb-5 text-center">
+                    {mode === 'login' && 'Sign in to your account'}
+                    {mode === 'signup' && 'Create a new account'}
+                    {mode === 'forgot' && 'Reset your password'}
+                </p>
+
+                <form onSubmit={onSubmit} className="space-y-4">
+                    {/* Email */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                            Email address
+                        </label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="rajan@example.com"
+                            className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                        />
+                    </div>
+
+                    {/* Password (not shown in forgot mode) */}
+                    {mode !== 'forgot' && (
                         <div>
                             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                                Email address
+                                Password
                             </label>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="rajan@example.com"
-                                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder={mode === 'signup' ? 'Min. 6 characters' : '••••••••'}
+                                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(v => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
-                        {error && <p className="text-xs text-red-500">{error}</p>}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-60"
-                        >
-                            {loading ? 'Sending...' : 'Send verification code'}
+                    )}
+
+                    {/* Error / Info */}
+                    {error && <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+                    {info && <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">{info}</p>}
+
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-60"
+                    >
+                        {loading
+                            ? 'Please wait…'
+                            : mode === 'login' ? 'Sign in'
+                                : mode === 'signup' ? 'Create account'
+                                    : 'Send reset link'}
+                    </button>
+                </form>
+
+                {/* Footer links */}
+                <div className="mt-5 flex flex-col gap-2 text-center">
+                    {mode === 'login' && (
+                        <>
+                            <button onClick={() => switchMode('forgot')} className="text-xs text-gray-400 hover:text-gray-600 transition">
+                                Forgot password?
+                            </button>
+                            <button onClick={() => switchMode('signup')} className="text-sm text-green-600 hover:text-green-700 font-medium transition">
+                                Don't have an account? Sign up
+                            </button>
+                        </>
+                    )}
+                    {(mode === 'signup' || mode === 'forgot') && (
+                        <button onClick={() => switchMode('login')} className="text-sm text-green-600 hover:text-green-700 font-medium transition">
+                            ← Back to sign in
                         </button>
-                    </form>
-                ) : (
-                    <form onSubmit={handleVerifyOtp} className="space-y-4">
-                        <div>
-                            <p className="text-sm text-gray-600 mb-4">
-                                We sent a 6-digit code to <span className="font-medium text-gray-900">{email}</span>
-                            </p>
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                                Verification code
-                            </label>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={6}
-                                required
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                placeholder="123456"
-                                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 text-center tracking-widest font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                            />
-                        </div>
-                        {error && <p className="text-xs text-red-500">{error}</p>}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-60"
-                        >
-                            {loading ? 'Verifying...' : 'Verify & Sign in'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => { setStep('email'); setOtp(''); setError('') }}
-                            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition"
-                        >
-                            Use a different email
-                        </button>
-                    </form>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     )
