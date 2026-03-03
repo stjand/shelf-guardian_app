@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Camera, X, Loader2, CheckCircle2, ChevronDown, Database, PackageSearch } from 'lucide-react'
+import { Camera, X, Loader2, CheckCircle2, ChevronDown, Database, PackageSearch, ScanText } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store'
 import Quagga, { type QuaggaJSResultObject } from '@ericblade/quagga2'
+import ExpiryOcrScanner from '../components/ExpiryOcrScanner'
 
 interface ScannedProduct {
     name: string
@@ -29,6 +30,7 @@ export default function ScanPage() {
     const [batchNo, setBatchNo] = useState('')
     const [supplierId, setSupplierId] = useState('')
     const [saving, setSaving] = useState(false)
+    const [showOcrScanner, setShowOcrScanner] = useState(false)
     const [error, setError] = useState('')
 
     // ─── LOOKUP LOGIC ────────────────────────────────────────────────────────────
@@ -251,6 +253,15 @@ export default function ScanPage() {
     // ─── FORM MODE ───────────────────────────────────────────────────────────────
     if (mode === 'form') return (
         <div className="min-h-screen bg-white">
+            {showOcrScanner && (
+                <ExpiryOcrScanner
+                    onDateDetected={(isoDate) => {
+                        setExpiryDate(isoDate)
+                        setShowOcrScanner(false)
+                    }}
+                    onClose={() => setShowOcrScanner(false)}
+                />
+            )}
             <div className="px-4 py-5 border-b border-gray-100 flex items-center gap-3">
                 <button onClick={resetForm} className="p-1 -ml-1 text-gray-400 hover:text-gray-600">
                     <X className="w-5 h-5" />
@@ -326,13 +337,28 @@ export default function ScanPage() {
                     </div>
                     <div>
                         <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Expiry date *</label>
-                        <input
-                            type="date"
-                            required
-                            value={expiryDate}
-                            onChange={(e) => setExpiryDate(e.target.value)}
-                            className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        />
+                        <div className="flex gap-2">
+                            <input
+                                type="date"
+                                required
+                                value={expiryDate}
+                                onChange={(e) => setExpiryDate(e.target.value)}
+                                className="flex-1 min-w-0 px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowOcrScanner(true)}
+                                title="Scan expiry date with camera"
+                                className="flex-shrink-0 px-3 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg transition flex items-center gap-1.5 text-xs font-medium shadow-sm shadow-purple-500/30"
+                            >
+                                <ScanText className="w-4 h-4" />
+                                OCR
+                            </button>
+                        </div>
+                        <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                            <ScanText className="w-3 h-3" />
+                            Tap OCR to scan the expiry date printed on the package
+                        </p>
                     </div>
                 </div>
 
