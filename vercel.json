@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+        "source": "/(.*).html",
+        "destination": "/public/$1.html"
+    },
+    {
+        "source": "/css/(.*)",
+        "destination": "/public/css/$1"
+    },
+    {
+        "source": "/js/(.*)",
+        "destination": "/public/js/$1"
+    },
+    {
+        "source": "/",
+        "destination": "/public/inventory.html"
+    }
+  ]
+}

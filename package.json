@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "init-db": "node db/init.js"
+    "init-db": "node db/init.js",
+    "build": "echo 'No build required for this project'"
   },
   "dependencies": {
     "express": "^4.21.2",
