@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Suppliers — Shelf Guardian</title>
+    <meta name="description" content="Manage supplier and distributor contacts in Shelf Guardian.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 20px 16px;
+            gap: 16px;
+        }
+
+        /* Coming soon illustration area */
+        .coming-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 32px 20px 20px;
+        }
+
+        .coming-illustration {
+            width: 88px; height: 88px;
+            border-radius: var(--r-xl);
+            background: linear-gradient(135deg, var(--accent-soft) 0%, rgba(16,185,129,.15) 100%);
+            border: 1.5px solid var(--success-border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+            margin-bottom: 20px;
+            box-shadow: var(--sh-accent);
+        }
+
+        .coming-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -.03em;
+            color: var(--txt-1);
+            margin-bottom: 8px;
+        }
+
+        .coming-desc {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--txt-2);
+            max-width: 280px;
+            line-height: 1.6;
+        }
+
+        /* Feature list card */
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border-str);
+            border-radius: var(--r-md);
+            overflow: hidden;
+        }
+
+        .feature-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--txt-3);
+        }
+
+        .feature-chip {
+            margin-left: auto;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid var(--success-border);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature-row:last-child { border-bottom: none; }
+
+        .feature-row-icon {
+            width: 34px; height: 34px;
+            border-radius: var(--r-sm);
+            background: var(--surface-3);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .feature-row-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--txt-1);
+        }
+
+        .feature-row-sub {
+            font-size: 12px;
+            color: var(--txt-3);
+            margin-top: 1px;
+        }
+
+        .feature-status {
+            margin-left: auto;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--s-300);
+            flex-shrink: 0;
+        }
+
+        @media (min-width: 600px) {
+            main { max-width: 560px; margin-left: auto; margin-right: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <header class="sg-header">
+        <div class="sg-header-inner">
+            <div class="sg-header-badge">
+                <i data-lucide="truck" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="sg-header-text">
+                <div class="sg-header-title">Suppliers</div>
+                <div class="sg-header-sub">Distributor management</div>
+            </div>
+            <button class="sg-header-action" aria-label="Add supplier" disabled style="opacity:.45;">
+                <i data-lucide="plus" style="width:17px;height:17px;"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="sg-content-wrap">
+
+            <!-- Hero -->
+            <div class="coming-hero">
+                <div class="coming-illustration">
+                    <i data-lucide="building-2" style="width:38px;height:38px;"></i>
+                </div>
+                <h1 class="coming-title">Suppliers Module</h1>
+                <p class="coming-desc">Full supplier management is in development. Here's a preview of what's coming.</p>
+            </div>
+
+            <!-- Feature preview card -->
+            <div class="feature-card">
+                <div class="feature-card-header">
+                    <i data-lucide="sparkles" style="width:15px;height:15px;color:var(--accent);"></i>
+                    <span class="feature-card-title">Upcoming Features</span>
+                    <span class="feature-chip">Coming Soon</span>
+                </div>
+                <div class="feature-row">
+                    <div class="feature-row-icon"><i data-lucide="contact" style="width:17px;height:17px;"></i></div>
+                    <div>
+                        <div class="feature-row-title">Contact Management</div>
+                        <div class="feature-row-sub">Store supplier info, phone, email</div>
+                    </div>
+                    <div class="feature-status"></div>
+                </div>
+                <div class="feature-row">
+                    <div class="feature-row-icon"><i data-lucide="history" style="width:17px;height:17px;"></i></div>
+                    <div>
+                        <div class="feature-row-title">Order History</div>
+                        <div class="feature-row-sub">Track past orders per supplier</div>
+                    </div>
+                    <div class="feature-status"></div>
+                </div>
+                <div class="feature-row">
+                    <div class="feature-row-icon"><i data-lucide="receipt" style="width:17px;height:17px;"></i></div>
+                    <div>
+                        <div class="feature-row-title">Payment Terms</div>
+                        <div class="feature-row-sub">Credit limits and due dates</div>
+                    </div>
+                    <div class="feature-status"></div>
+                </div>
+                <div class="feature-row">
+                    <div class="feature-row-icon"><i data-lucide="bar-chart-2" style="width:17px;height:17px;"></i></div>
+                    <div>
+                        <div class="feature-row-title">Performance Analytics</div>
+                        <div class="feature-row-sub">Lead time, reliability scores</div>
+                    </div>
+                    <div class="feature-status"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div id="navbar-container"></div>
+<script src="/js/layout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerts — Shelf Guardian</title>
+    <meta name="description" content="View expiry alerts and items needing immediate attention.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        main { flex: 1; display: flex; flex-direction: column; }
+
+        /* Summary banner at top */
+        .alerts-summary {
+            margin: 14px 16px 0;
+            border-radius: var(--r-md);
+            overflow: hidden;
+        }
+
+        .summary-card {
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-radius: var(--r-md);
+        }
+
+        .summary-card.danger  { background: var(--danger-soft);  border: 1.5px solid var(--danger-border); }
+        .summary-card.clear   { background: var(--success-soft); border: 1.5px solid var(--success-border); }
+
+        .summary-icon {
+            width: 44px; height: 44px;
+            border-radius: var(--r);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .summary-icon.danger  { background: var(--danger);  color: #fff; }
+        .summary-icon.clear   { background: var(--success); color: #fff; }
+
+        .summary-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--txt-1);
+        }
+
+        .summary-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--txt-2);
+            margin-top: 2px;
+        }
+
+        /* Alert list */
+        #alerts-list {
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Alert item */
+        .alert-item {
+            display: flex;
+            gap: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-str);
+            border-radius: var(--r-md);
+            padding: 14px 16px;
+            animation: sgFadeUp .22s cubic-bezier(.33,1,.68,1) both;
+        }
+
+        .alert-item.danger  { border-left: 4px solid var(--danger); }
+        .alert-item.warning { border-left: 4px solid var(--warning); }
+
+        .alert-avatar {
+            width: 42px; height: 42px;
+            border-radius: var(--r);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            color: #fff;
+        }
+
+        .alert-avatar.danger  { background: var(--danger); }
+        .alert-avatar.warning { background: var(--warning); }
+
+        .alert-body { flex: 1; min-width: 0; }
+
+        .alert-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--txt-1);
+            letter-spacing: -.01em;
+            margin-bottom: 4px;
+        }
+
+        .alert-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .alert-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--txt-2);
+        }
+
+        .alert-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-str);
+        }
+
+        .alert-date {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--txt-2);
+        }
+
+        .alert-qty {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--r-sm);
+            background: var(--surface-3);
+            border: 1px solid var(--border-str);
+            color: var(--txt-1);
+        }
+
+        @media (min-width: 600px) {
+            .alerts-summary, #alerts-list { max-width: 560px; margin-left: auto; margin-right: auto; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <header class="sg-header">
+        <div class="sg-header-inner">
+            <div class="sg-header-badge" style="background:var(--danger-soft); color:var(--danger);">
+                <i data-lucide="bell" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="sg-header-text">
+                <div class="sg-header-title">Alerts</div>
+                <div class="sg-header-sub" id="header-alert-count">Checking items…</div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Summary card -->
+        <div class="alerts-summary">
+            <div class="summary-card danger" id="summary-card">
+                <div class="summary-icon danger" id="summary-icon">
+                    <i data-lucide="alert-octagon" style="width:20px;height:20px;"></i>
+                </div>
+                <div>
+                    <div class="summary-title" id="summary-title">Checking alerts…</div>
+                    <div class="summary-text" id="summary-text">Items expiring within 3 days</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alerts-list">
+            <div class="sg-loading">
+                <div class="sg-spinner"></div>
+                <p>Loading alerts…</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="navbar-container"></div>
+<script src="/js/layout.js"></script>
+<script>
+    const listEl   = document.getElementById('alerts-list');
+    const countEl  = document.getElementById('header-alert-count');
+    const sumCard  = document.getElementById('summary-card');
+    const sumIcon  = document.getElementById('summary-icon');
+    const sumTitle = document.getElementById('summary-title');
+    const sumText  = document.getElementById('summary-text');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        fetchAlerts();
+    });
+
+    async function fetchAlerts() {
+        try {
+            const res   = await fetch('/api/inventory');
+            const items = await res.json();
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            const critical = items.filter(i => {
+                const d = new Date(i.expiry_date); d.setHours(0,0,0,0);
+                return Math.floor((d - today) / 86400000) <= 3;
+            }).sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+
+            // Header
+            countEl.textContent = `${critical.length} item${critical.length !== 1 ? 's' : ''} need attention`;
+
+            if (critical.length === 0) {
+                sumCard.className  = 'summary-card clear';
+                sumIcon.className  = 'summary-icon clear';
+                sumIcon.innerHTML  = `<i data-lucide="shield-check" style="width:20px;height:20px;"></i>`;
+                sumTitle.textContent = 'All clear!';
+                sumText.textContent  = 'No items expiring in the next 3 days';
+                countEl.textContent  = 'Everything looks good';
+
+                listEl.innerHTML = `
+                    <div class="sg-empty">
+                        <div class="sg-empty-icon" style="background:var(--success-soft);color:var(--success);border-color:var(--success-border);">
+                            <i data-lucide="shield-check" style="width:28px;height:28px;"></i>
+                        </div>
+                        <p class="sg-empty-title">All Clear</p>
+                        <p class="sg-empty-text">No items expiring within 3 days. Keep up the good work!</p>
+                    </div>`;
+            } else {
+                sumTitle.textContent = `${critical.length} item${critical.length !== 1 ? 's' : ''} require${critical.length === 1 ? 's' : ''} attention`;
+                sumText.textContent  = 'Review and remove expired products';
+                listEl.innerHTML = critical.map(renderAlert).join('');
+            }
+
+            lucide.createIcons();
+        } catch (e) {
+            listEl.innerHTML = `
+                <div class="sg-empty">
+                    <div class="sg-empty-icon"><i data-lucide="wifi-off" style="width:28px;height:28px;"></i></div>
+                    <p class="sg-empty-title">Connection error</p>
+                    <p class="sg-empty-text">Could not load alerts. Try again.</p>
+                </div>`;
+            lucide.createIcons();
+        }
+    }
+
+    function renderAlert(item) {
+        const expiry = new Date(item.expiry_date);
+        const today  = new Date();
+        expiry.setHours(0,0,0,0); today.setHours(0,0,0,0);
+        const days = Math.floor((expiry - today) / 86400000);
+
+        const isExpired = days < 0;
+        const isDanger  = days <= 1;
+        const cls = (isExpired || isDanger) ? 'danger' : 'warning';
+
+        let urgency;
+        if (isExpired)    urgency = 'EXPIRED';
+        else if (days === 0) urgency = 'EXPIRES TODAY';
+        else if (days === 1) urgency = 'EXPIRES TOMORROW';
+        else              urgency = `${days} DAYS LEFT`;
+
+        const icon = isExpired ? 'x-octagon' : isDanger ? 'alert-triangle' : 'clock';
+        const badge = isExpired || isDanger
+            ? `<span class="sg-badge sg-badge-danger">${urgency}</span>`
+            : `<span class="sg-badge sg-badge-warning">${urgency}</span>`;
+
+        const dateStr = expiry.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+        return `
+        <div class="alert-item ${cls}">
+            <div class="alert-avatar ${cls}">
+                <i data-lucide="${icon}" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="alert-body">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px;">
+                    <div class="alert-name truncate">${item.name}</div>
+                    ${badge}
+                </div>
+                ${(item.brand || item.category) ? `
+                <div class="alert-meta">
+                    ${item.brand    ? `<span class="alert-meta-chip"><i data-lucide="tag"    style="width:11px;height:11px;color:var(--txt-3);"></i>${item.brand}</span>` : ''}
+                    ${item.category ? `<span class="alert-meta-chip"><i data-lucide="folder" style="width:11px;height:11px;color:var(--txt-3);"></i>${item.category}</span>` : ''}
+                </div>` : ''}
+                <div class="alert-footer">
+                    <span class="alert-date">${isExpired ? 'Expired' : 'Expires'} ${dateStr}</span>
+                    <span class="alert-qty"><i data-lucide="package" style="width:11px;height:11px;color:var(--txt-3);"></i>${item.quantity} units</span>
+                </div>
+            </div>
+        </div>`;
+    }
+</script>
+</body>
+</html>

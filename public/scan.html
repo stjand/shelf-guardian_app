@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Item — Shelf Guardian</title>
+    <meta name="description" content="Scan barcodes or search products to add to your shelf inventory.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: var(--bg); color: var(--txt-1); font-family: 'Inter', sans-serif; }
+
+        .scan-container { padding: 14px 16px 120px; max-width: 560px; margin: 0 auto; }
+
+        /* Search Section */
+        .search-section { margin-bottom: 20px; position: relative; }
+        #search-results {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border-str);
+            border-radius: var(--r-md);
+            margin-top: 8px;
+            z-index: 60;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            display: none;
+        }
+        #search-results.show { display: block; }
+        .sr-item {
+            padding: 12px 14px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .sr-item:last-child { border-bottom: none; }
+        .sr-item:hover { background: var(--surface-2); }
+        .sr-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--surface-3); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .sr-name { font-size: 14px; font-weight: 700; color: var(--txt-1); }
+        .sr-meta { font-size: 11px; font-weight: 500; color: var(--txt-3); margin-top: 2px; }
+        .sr-barcode { margin-left: auto; font-family: monospace; font-size: 11px; color: var(--txt-3); background: var(--surface-3); padding: 2px 6px; border-radius: 4px; }
+        .sr-empty { padding: 20px; text-align: center; font-size: 13px; color: var(--txt-3); font-weight: 500; }
+
+        /* Scanner Box */
+        .scanner-section { margin-bottom: 24px; }
+        .scanner-card {
+            background: #000;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-str);
+        }
+        #interactive video { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+        .scanner-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+        .cam-btn {
+            background: none; border: none; padding: 0; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            transition: transform .2s;
+        }
+        .cam-btn:active { transform: scale(0.96); }
+        .cam-btn-ring { width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.2); position: relative; display: flex; align-items: center; justify-content: center; }
+        .cam-btn-core { width: 62px; height: 62px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(16,185,129,0.3); }
+        .cam-btn-title { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+        .cam-btn-sub { color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500; margin-top: 4px; }
+
+        .scan-guide {
+            position: absolute; inset: 20px; border: 2px solid rgba(255,255,255,0.15); border-radius: 16px;
+            display: none; pointer-events: none;
+        }
+        .scan-guide.active { display: block; }
+        .scan-line {
+            width: 100%; height: 2px; background: var(--accent); position: absolute; top:0;
+            box-shadow: 0 0 15px var(--accent); animation: scanMove 2s infinite ease-in-out;
+        }
+        @keyframes scanMove { 0%, 100% { top: 10%; opacity: 0.2; } 50% { top: 90%; opacity: 1; } }
+
+        /* Form Card */
+        .details-card {
+            background: var(--surface);
+            border: 1px solid var(--border-str);
+            border-radius: var(--r-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .form-title { font-size: 16px; font-weight: 800; color: var(--txt-1); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em; }
+        
+        .status-banner {
+            display: none; align-items: center; gap: 8px; padding: 12px 14px; border-radius: var(--r-sm);
+            font-size: 13px; font-weight: 600; margin-bottom: 20px;
+            border: 1px solid transparent;
+        }
+        .status-banner.show { display: flex; animation: sgFadeUp .2s; }
+        .status-banner.loading { background: var(--accent-soft); border-color: var(--accent-light); color: var(--accent-dark); }
+        .status-banner.found { background: #dcfce7; border-color: #86efac; color: #166534; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .full-width { grid-column: span 2; }
+
+        .input-wrap label { display: block; font-size: 11px; font-weight: 700; color: var(--txt-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; padding-left: 4px; }
+        .sg-input {
+            width: 100%; height: 48px; padding: 0 14px; background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 500; color: var(--txt-1);
+            transition: all .2s;
+        }
+        .sg-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }
+        .sg-input.mono { font-family: monospace; font-weight: 600; letter-spacing: .02em; }
+
+        .submit-btn {
+            width: 100%; height: 54px; background: var(--accent); color: #fff; border: none; border-radius: 16px;
+            font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-top: 24px; cursor: pointer; box-shadow: 0 8px 20px rgba(16,185,129,0.25);
+            transition: all .2s;
+        }
+        .submit-btn:active { transform: scale(0.97); box-shadow: none; }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* Success Screen */
+        #success-screen {
+            position: fixed; inset: 0; background: var(--surface); z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            animation: sgFadeIn .3s both;
+        }
+        #success-screen.show { display: flex; }
+        .success-circle { width: 88px; height: 88px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 24px; }
+
+        @media (min-width: 600px) {
+            .scan-container { max-width: 560px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <header class="sg-header">
+        <div class="sg-header-inner">
+            <div class="sg-header-badge">
+                <i data-lucide="scan-barcode" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="sg-header-text">
+                <div class="sg-header-title">Add Item</div>
+                <div class="sg-header-sub">Scan or search for products</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="scan-container">
+        <div class="dt-scan-left">
+            <!-- Manual Search -->
+            <div class="search-section">
+                <div class="sg-search-wrap">
+                    <i data-lucide="search" class="sg-search-icon" style="width:17px;height:17px;"></i>
+                    <input type="search" id="product-search" class="sg-search" placeholder="Search product library…" autocomplete="off">
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <!-- Scan Trigger Button -->
+            <button id="btn-trigger-scan" class="submit-btn" style="background: var(--surface-3); color: var(--accent); border: 1px solid var(--border-str); box-shadow: none; margin-bottom: 24px; margin-top: 0;">
+                <i data-lucide="scan" style="width:20px;height:20px;"></i>
+                Scan Barcode
+            </button>
+
+            <!-- Scanner (Hidden by default) -->
+            <div class="scanner-section" id="scanner-widget" style="display:none;">
+                <div class="scanner-card" id="interactive">
+                    <div class="scanner-overlay" id="camera-overlay">
+                        <button id="start-cam-btn" class="cam-btn" aria-label="Start scanner">
+                            <div class="cam-btn-ring">
+                                <div class="cam-btn-core">
+                                    <i data-lucide="camera" style="color:white; width:34px; height:34px;"></i>
+                                </div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div class="cam-btn-title">Open Scanner</div>
+                                <div class="cam-btn-sub">Tap to detect barcode</div>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="scan-guide" id="scan-guide">
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dt-scan-right">
+            <!-- Details Form -->
+            <div class="details-card">
+                <div class="form-title">
+                    <i data-lucide="clipboard-list" style="color:var(--accent); width:18px;height:18px;"></i>
+                    Product Information
+                </div>
+
+                <div id="lookup-loading" class="status-banner loading">
+                    <div class="sg-spinner" style="width:16px;height:16px;border-width:2px;border-top-color:var(--accent);"></div>
+                    Finding product details…
+                </div>
+                <div id="lookup-found" class="status-banner found">
+                    <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i>
+                    Product identified! Review details.
+                </div>
+
+                <form id="add-form">
+                    <div class="form-grid">
+                        <div class="input-wrap full-width">
+                            <label for="inp-barcode">Barcode Number</label>
+                            <input type="text" id="inp-barcode" class="sg-input mono" placeholder="No barcode" autocomplete="off">
+                        </div>
+
+                        <div class="input-wrap full-width">
+                            <label for="inp-name">Product Name *</label>
+                            <input type="text" id="inp-name" class="sg-input" placeholder="e.g. Fresh Milk 1L" required>
+                        </div>
+
+                        <div class="input-wrap">
+                            <label for="inp-qty">Quantity</label>
+                            <input type="number" id="inp-qty" class="sg-input" value="1" min="1" required>
+                        </div>
+
+                        <div class="input-wrap">
+                            <label for="inp-expiry">Expiry Date *</label>
+                            <input type="date" id="inp-expiry" class="sg-input" required>
+                        </div>
+
+                        <div class="input-wrap">
+                            <label for="inp-brand">Brand</label>
+                            <input type="text" id="inp-brand" class="sg-input" placeholder="Optional">
+                        </div>
+
+                        <div class="input-wrap">
+                            <label for="inp-cat">Category</label>
+                            <select id="inp-cat" class="sg-input">
+                                <option value="Dairy">Dairy</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Beverages">Beverages</option>
+                                <option value="Staples">Staples</option>
+                                <option value="Personal Care">Personal Care</option>
+                                <option value="Home Care">Home Care</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="submit-btn">
+                        <i data-lucide="plus-circle" style="width:20px;height:20px;"></i>
+                        Add to Inventory
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Overlay -->
+<div id="success-screen">
+    <div class="success-circle">
+        <i data-lucide="check" style="width:44px; height:44px;"></i>
+    </div>
+    <h2 style="font-size:24px; font-weight:900; letter-spacing:-0.03em; color:var(--txt-1); margin-bottom:8px;">Added to Shelf</h2>
+    <p id="success-msg" style="color:var(--txt-3); font-weight:500;">Product has been stored successfully.</p>
+</div>
+
+<div id="navbar-container"></div>
+<script src="/js/layout.js"></script>
+<script src="/js/scan.js"></script>
+</body>
+</html>
