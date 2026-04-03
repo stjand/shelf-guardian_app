@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Shelf Guardian</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-side-image">
+            <h2>Join the Guardian.</h2>
+            <p>Ready to revolutionize your shelf? Create an account and start tracking your inventory like a pro.</p>
+            <div class="auth-features">
+                <div class="auth-feat-item"><i data-lucide="shield"></i> 100% Private & Secure</div>
+                <div class="auth-feat-item"><i data-lucide="cloud"></i> Sync Across Devices</div>
+                <div class="auth-feat-item"><i data-lucide="star"></i> Forever Free for Small Shops</div>
+            </div>
+        </div>
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-icon">
+                    <i data-lucide="shield-plus"></i>
+                </div>
+                <h1>Create Account</h1>
+                <p>Join the safe shelf movement</p>
+            </div>
+            
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Min. 6 characters" required minlength="6">
+                    </div>
+                </div>
+                
+                <div id="error-msg" class="error-banner" style="display: none;"></div>
+                
+                <button type="submit" class="auth-btn">
+                    <span>Create Account</span>
+                    <i data-lucide="check-circle"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Sign in here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        const registerForm = document.getElementById('register-form');
+        const errorMsg = document.getElementById('error-msg');
+        
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            
+            const username = registerForm.username.value;
+            const email = registerForm.email.value;
+            const password = registerForm.password.value;
+            
+            const btn = registerForm.querySelector('.auth-btn');
+            const btnText = btn.querySelector('span');
+            const originalText = btnText.textContent;
+            
+            btn.disabled = true;
+            btnText.textContent = 'Registering...';
+            
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert('Registration successful! Please sign in.');
+                    window.location.href = '/login.html';
+                } else {
+                    errorMsg.textContent = data.error || 'Registration failed';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Network error. Please try again.';
+                errorMsg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = originalText;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -138,8 +138,20 @@
         #success-screen.show { display: flex; }
         .success-circle { width: 88px; height: 88px; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 24px; }
 
-        @media (min-width: 600px) {
+        @media (min-width: 600px) and (max-width: 899px) {
             .scan-container { max-width: 560px; margin: 0 auto; }
+        }
+
+        @media (min-width: 900px) {
+            .scan-container {
+                max-width: 1000px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1fr 1.1fr;
+                gap: 40px;
+                align-items: start;
+                padding-top: 40px;
+            }
         }
     </style>
 </head>
@@ -277,6 +289,7 @@
 </div>
 
 <div id="navbar-container"></div>
+<script src="/js/auth.js"></script>
 <script src="/js/layout.js"></script>
 <script src="/js/scan.js"></script>
 </body>

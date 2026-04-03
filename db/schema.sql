@@ -1,3 +1,12 @@
+-- Create Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create Products Table
 CREATE TABLE IF NOT EXISTS products (
     barcode TEXT PRIMARY KEY,
@@ -9,10 +18,12 @@ CREATE TABLE IF NOT EXISTS products (
 -- Create Inventory Table
 CREATE TABLE IF NOT EXISTS inventory (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
     barcode TEXT NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
     expiry_date DATE NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(barcode) REFERENCES products(barcode)
 );
 

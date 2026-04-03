@@ -57,42 +57,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div class="sg-sidebar-footer">
                 <div class="sg-sidebar-footer-info">
-                    <div class="sg-sidebar-avatar">S</div>
-                    <div>
-                        <div class="sg-sidebar-user-name">Store Manager</div>
-                        <div class="sg-sidebar-user-role">Admin</div>
+                    <div class="sg-sidebar-avatar user-avatar-display">U</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div class="sg-sidebar-user-name user-name-display truncate">User</div>
+                        <div class="sg-sidebar-user-role">Member</div>
                     </div>
+                    <button class="logout-btn" title="Logout" style="background:none;border:none;color:var(--txt-3);cursor:pointer;padding:5px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s;">
+                        <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+                    </button>
                 </div>
             </div>
         </aside>`;
 
     // ── Wrap page in desktop frame ─────────────────────────
-    // Find the .page element and wrap it with the sidebar frame
     const pageEl = document.querySelector('.page');
     if (pageEl) {
         const frame = document.createElement('div');
         frame.className = 'sg-desktop-frame';
-
-        // Insert sidebar HTML before page
         frame.innerHTML = desktopSidebar;
 
-        // Move .page into a scrollable main wrapper
         const mainWrapper = document.createElement('div');
         mainWrapper.className = 'sg-desktop-main';
         pageEl.parentNode.insertBefore(frame, pageEl);
         mainWrapper.appendChild(pageEl);
         frame.appendChild(mainWrapper);
+
+        // Add logout icon to mobile header if exists
+        const headerInner = pageEl.querySelector('.sg-header-inner');
+        if (headerInner && !headerInner.querySelector('.logout-btn')) {
+            const logoutMobile = document.createElement('button');
+            logoutMobile.className = 'sg-header-action logout-btn mobile-only';
+            logoutMobile.style.marginLeft = 'auto';
+            logoutMobile.innerHTML = '<i data-lucide="log-out" style="width:17px;height:17px;"></i>';
+            headerInner.appendChild(logoutMobile);
+        }
     }
 
-    // Inject mobile nav + display:none wrapper
     navContainer.innerHTML = mobileNav;
 
     if (window.lucide) lucide.createIcons();
 
-    // ── Smart alert badge (both mobile + desktop) ──────────
+    // ── Smart alert badge ──────────────────────────────────
     fetch('/api/inventory')
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) return [];
+            return r.json();
+        })
         .then(items => {
+            if (!Array.isArray(items)) return;
             const count = items.filter(i => {
                 const d = new Date(i.expiry_date);
                 d.setHours(0,0,0,0);
@@ -102,10 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (count > 0) {
                 const label = count > 9 ? '9+' : String(count);
-
                 const mobileBadge = document.getElementById('nav-alert-badge');
                 if (mobileBadge) { mobileBadge.textContent = label; mobileBadge.style.display = 'flex'; }
-
                 const desktopBadge = document.getElementById('sidebar-alert-badge');
                 if (desktopBadge) { desktopBadge.textContent = label; desktopBadge.style.display = 'flex'; }
             }

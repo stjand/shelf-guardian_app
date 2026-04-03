@@ -143,7 +143,7 @@
             .dt-stats-row { display: none !important; }
         }
 
-        @media (min-width: 600px) {
+        @media (min-width: 600px) and (max-width: 899px) {
             .inv-toolbar, #inventory-list { max-width: 560px; margin-left: auto; margin-right: auto; width: 100%; }
         }
     </style>
@@ -221,6 +221,7 @@
 </div>
 
 <div id="navbar-container"></div>
+<script src="/js/auth.js"></script>
 <script src="/js/layout.js"></script>
 <script>
     const listEl      = document.getElementById('inventory-list');

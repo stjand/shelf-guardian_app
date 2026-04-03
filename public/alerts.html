@@ -141,7 +141,7 @@
             color: var(--txt-1);
         }
 
-        @media (min-width: 600px) {
+        @media (min-width: 600px) and (max-width: 899px) {
             .alerts-summary, #alerts-list { max-width: 560px; margin-left: auto; margin-right: auto; width: 100%; }
         }
     </style>
@@ -186,6 +186,7 @@
 </div>
 
 <div id="navbar-container"></div>
+<script src="/js/auth.js"></script>
 <script src="/js/layout.js"></script>
 <script>
     const listEl   = document.getElementById('alerts-list');
