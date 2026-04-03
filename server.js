@@ -171,6 +171,73 @@ app.delete('/api/inventory/:id', authenticate, (req, res) => {
     });
 });
 
+// Get analytics for current user
+app.get('/api/analytics', authenticate, (req, res) => {
+    const userId = req.user.id;
+    const today = new Date().toISOString().split('T')[0];
+    const sevenDaysLater = new Date(); sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+    const thirtyDaysLater = new Date(); thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+    
+    const d7 = sevenDaysLater.toISOString().split('T')[0];
+    const d30 = thirtyDaysLater.toISOString().split('T')[0];
+
+    const queries = {
+        overview: `
+            SELECT 
+                COUNT(*) as total_items, 
+                SUM(quantity) as total_units 
+            FROM inventory 
+            WHERE user_id = ?`,
+        expiry: `
+            SELECT 
+                SUM(CASE WHEN expiry_date < ? THEN quantity ELSE 0 END) as expired,
+                SUM(CASE WHEN expiry_date >= ? AND expiry_date <= ? THEN quantity ELSE 0 END) as expiring_soon,
+                SUM(CASE WHEN expiry_date > ? AND expiry_date <= ? THEN quantity ELSE 0 END) as mid_term,
+                SUM(CASE WHEN expiry_date > ? THEN quantity ELSE 0 END) as safe
+            FROM inventory 
+            WHERE user_id = ?`,
+        categories: `
+            SELECT products.category, SUM(inventory.quantity) as count
+            FROM inventory
+            JOIN products ON inventory.barcode = products.barcode
+            WHERE inventory.user_id = ?
+            GROUP BY products.category
+            ORDER BY count DESC`,
+        riskBrands: `
+            SELECT products.brand, SUM(inventory.quantity) as risk_count
+            FROM inventory
+            JOIN products ON inventory.barcode = products.barcode
+            WHERE inventory.user_id = ? AND inventory.expiry_date <= ?
+            GROUP BY products.brand
+            ORDER BY risk_count DESC
+            LIMIT 5`
+    };
+
+    const getStats = (sql, params) => new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+    });
+
+    const getSingle = (sql, params) => new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => err ? reject(err) : resolve(row));
+    });
+
+    Promise.all([
+        getSingle(queries.overview, [userId]),
+        getSingle(queries.expiry, [today, today, d7, d7, d30, d30, userId]),
+        getStats(queries.categories, [userId]),
+        getStats(queries.riskBrands, [userId, d30])
+    ]).then(([overview, expiry, categories, riskBrands]) => {
+        res.json({
+            overview: overview || { total_items: 0, total_units: 0 },
+            expiry: expiry || { expired: 0, expiring_soon: 0, mid_term: 0, safe: 0 },
+            categories,
+            riskBrands
+        });
+    }).catch(err => {
+        res.status(500).json({ error: err.message });
+    });
+});
+
 // Catch-all route to serve the SPA
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

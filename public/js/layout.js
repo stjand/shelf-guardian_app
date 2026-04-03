@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { path: '/inventory.html', icon: 'package-2',    label: 'Inventory',  color: '#10b981' },
         { path: '/scan.html',      icon: 'scan-barcode', label: 'Scan',       color: '#6366f1' },
         { path: '/alerts.html',    icon: 'bell',         label: 'Alerts',     color: '#ef4444', hasAlert: true },
-        { path: '/suppliers.html', icon: 'truck',        label: 'Suppliers',  color: '#f59e0b' },
+        { path: '/analytics.html', icon: 'bar-chart-3',  label: 'Analytics',  color: '#6366f1' },
     ];
 
     const isActive = (tab) =>

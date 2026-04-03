@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics — Shelf Guardian</title>
+    <meta name="description" content="View real-time inventory insights and waste risk analysis.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .page { background: var(--bg); }
+        .analytics-container { padding: 16px 16px 120px; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Overview Cards */
+        .analytics-grid-top { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border-str); border-radius: var(--r-lg); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .stat-label { font-size: 11px; font-weight: 700; color: var(--txt-3); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 28px; font-weight: 900; color: var(--txt-1); letter-spacing: -0.04em; }
+
+        /* Risk Visualization */
+        .chart-card { background: var(--surface); border: 1px solid var(--border-str); border-radius: var(--r-lg); padding: 24px; }
+        .chart-title { font-size: 15px; font-weight: 800; color: var(--txt-1); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        
+        .risk-bars { display: flex; flex-direction: column; gap: 16px; }
+        .risk-item { }
+        .risk-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .risk-label { color: var(--txt-2); }
+        .risk-count { color: var(--txt-1); }
+        .risk-track { height: 8px; background: var(--surface-3); border-radius: 4px; overflow: hidden; }
+        .risk-fill { height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+
+        /* Lists */
+        .data-lists { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        
+        .list-section { background: var(--surface); border: 1px solid var(--border-str); border-radius: var(--r-lg); overflow: hidden; }
+        .list-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 800; color: var(--txt-1); display: flex; justify-content: space-between; }
+        .list-item { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .list-item:last-child { border-bottom: none; }
+        .item-name { font-size: 14px; font-weight: 600; color: var(--txt-2); }
+        .item-val { font-size: 13px; font-weight: 700; color: var(--txt-1); background: var(--surface-2); padding: 4px 10px; border-radius: 20px; }
+
+        @media (min-width: 900px) {
+            .analytics-grid-top { grid-template-columns: repeat(4, 1fr); }
+            .data-lists { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header class="sg-header">
+        <div class="sg-header-inner">
+            <div class="sg-header-badge" style="background: var(--accent-soft); color: var(--accent);">
+                <i data-lucide="bar-chart-3" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="sg-header-text">
+                <div class="sg-header-title">Analytics</div>
+                <div class="sg-header-sub">Insights & Waste Analysis</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="analytics-container">
+        <div class="analytics-grid-top">
+            <div class="stat-card">
+                <span class="stat-label">Total Items</span>
+                <span id="stat-items" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Total Units</span>
+                <span id="stat-units" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Stock Status</span>
+                <span id="stat-status" class="stat-value" style="font-size: 20px;">Healthy</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Waste Risk</span>
+                <span id="stat-risk" class="stat-value" style="font-size: 20px;">Low</span>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i data-lucide="activity" style="width:16px;height:16px;color:var(--accent);"></i>
+                Expiry Risk Breakdown
+            </div>
+            <div class="risk-bars">
+                <div class="risk-item">
+                    <div class="risk-info">
+                        <span class="risk-label">Expired</span>
+                        <span class="risk-count" id="count-expired">0 units</span>
+                    </div>
+                    <div class="risk-track"><div id="bar-expired" class="risk-fill" style="width: 0%; background: #f43f5e;"></div></div>
+                </div>
+                <div class="risk-item">
+                    <div class="risk-info">
+                        <span class="risk-label">Critical (Next 7 days)</span>
+                        <span class="risk-count" id="count-critical">0 units</span>
+                    </div>
+                    <div class="risk-track"><div id="bar-critical" class="risk-fill" style="width: 0%; background: #f59e0b;"></div></div>
+                </div>
+                <div class="risk-item">
+                    <div class="risk-info">
+                        <span class="risk-label">Near Expiry (Next 30 days)</span>
+                        <span class="risk-count" id="count-mid">0 units</span>
+                    </div>
+                    <div class="risk-track"><div id="bar-mid" class="risk-fill" style="width: 0%; background: #3b82f6;"></div></div>
+                </div>
+                <div class="risk-item">
+                    <div class="risk-info">
+                        <span class="risk-label">Safe (30+ days)</span>
+                        <span class="risk-count" id="count-safe">0 units</span>
+                    </div>
+                    <div class="risk-track"><div id="bar-safe" class="risk-fill" style="width: 0%; background: #10b981;"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-lists">
+            <div class="list-section">
+                <div class="list-header">
+                    <span>TOP RISK BRANDS</span>
+                    <i data-lucide="alert-triangle" style="width:14px;height:14px;color:#f59e0b;"></i>
+                </div>
+                <div id="risk-brands-list"></div>
+            </div>
+            <div class="list-section">
+                <div class="list-header">
+                    <span>CATEGORY DISTRIBUTION</span>
+                    <i data-lucide="pie-chart" style="width:14px;height:14px;color:var(--accent);"></i>
+                </div>
+                <div id="category-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="navbar-container"></div>
+<script src="/js/auth.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        fetchAnalytics();
+    });
+
+    async function fetchAnalytics() {
+        try {
+            const res = await fetch('/api/analytics');
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            // 1. Overview
+            document.getElementById('stat-items').textContent = data.overview.total_items || 0;
+            document.getElementById('stat-units').textContent = data.overview.total_units || 0;
+            
+            const units = data.overview.total_units || 0;
+            const expired = data.expiry.expired || 0;
+            const soon = data.expiry.expiring_soon || 0;
+            const riskRatio = units > 0 ? (expired + soon) / units : 0;
+
+            const statStatus = document.getElementById('stat-status');
+            const statRisk = document.getElementById('stat-risk');
+
+            if (riskRatio > 0.3) {
+                statStatus.textContent = 'Action Required';
+                statStatus.style.color = '#f43f5e';
+                statRisk.textContent = 'High';
+                statRisk.style.color = '#f43f5e';
+            } else if (riskRatio > 0) {
+                statStatus.textContent = 'Warning';
+                statStatus.style.color = '#f59e0b';
+                statRisk.textContent = 'Medium';
+                statRisk.style.color = '#f59e0b';
+            } else {
+                statStatus.textContent = 'All Healthy';
+                statStatus.style.color = '#10b981';
+                statRisk.textContent = 'Low';
+                statRisk.style.color = '#10b981';
+            }
+
+            // 2. Risk Bars
+            updateBar('expired', expired, units);
+            updateBar('critical', soon, units);
+            updateBar('mid', data.expiry.mid_term || 0, units);
+            updateBar('safe', data.expiry.safe || 0, units);
+
+            // 3. Risk Brands
+            const brandsList = document.getElementById('risk-brands-list');
+            if (data.riskBrands.length === 0) {
+                brandsList.innerHTML = '<div style="padding:40px;text-align:center;color:var(--txt-3);font-size:13px;">No risks identified</div>';
+            } else {
+                brandsList.innerHTML = data.riskBrands.map(b => `
+                    <div class="list-item">
+                        <span class="item-name">${b.brand || 'No Brand'}</span>
+                        <span class="item-val">${b.risk_count} units risk</span>
+                    </div>
+                `).join('');
+            }
+
+            // 4. Categories
+            const categoriesList = document.getElementById('category-list');
+            if (data.categories.length === 0) {
+                categoriesList.innerHTML = '<div style="padding:40px;text-align:center;color:var(--txt-3);font-size:13px;">No data available</div>';
+            } else {
+                categoriesList.innerHTML = data.categories.map(c => `
+                    <div class="list-item">
+                        <span class="item-name">${c.category}</span>
+                        <span class="item-val">${c.count} units</span>
+                    </div>
+                `).join('');
+            }
+
+            lucide.createIcons();
+        } catch (e) {
+            console.error('Analytics fetch error:', e);
+        }
+    }
+
+    function updateBar(id, val, total) {
+        const percentage = total > 0 ? (val / total * 100) : 0;
+        document.getElementById(`count-${id}`).textContent = `${val} units`;
+        setTimeout(() => {
+            const el = document.getElementById(`bar-${id}`);
+            if (el) el.style.width = percentage + '%';
+        }, 100);
+    }
+</script>
+</body>
+</html>
